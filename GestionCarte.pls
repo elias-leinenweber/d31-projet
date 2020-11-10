@@ -79,7 +79,7 @@ END AfficheCarte;
  *       prix d'une pizza du même type et de taille inférieure (supérieure)).
  */
 PROCEDURE ModifTarif(numpiz pizza.numpiz%TYPE, taille tarif.taille%TYPE, montant tarif.prix%TYPE)
-IS
+AS
 	CURSOR curPrixPizzaPetite IS
 	SELECT prix
 	  FROM tarif
@@ -116,4 +116,3 @@ END ModifTarif;
 
 END;
 /
-

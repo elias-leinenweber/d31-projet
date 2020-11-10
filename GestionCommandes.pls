@@ -20,7 +20,14 @@ CREATE OR REPLACE PACKAGE BODY GestionCommandes IS
  *       livrer, par ordre d'heure de livraison croissant.
  */
 PROCEDURE AfficheProchainesCommandes
-IS
+AS
+	CURSOR prochainesCommandes IS
+	SELECT c.numc,adresse1,adresse2,codepostal,ville,SUM(l.quantite)
+	FROM commande c JOIN ligne_cmd l ON c.numc = l.numc
+	WHERE (EXTRACT(HOUR FROM dateheure_cmd) - EXTRACT(HOUR FROM sysdate))<=1
+		AND etat IS NULL -- TODO à verifier
+	GROUP BY c.numc,adresse1,adresse2,codepostal,ville
+	ORDER BY c.dateheure_cmd;
 
 BEGIN
 END AfficheCarte;
@@ -84,7 +91,6 @@ PROCEDURE MeilleureCommandeMoisCourant
 IS
 BEGIN
 END MeilleureCommandeMoisCourant;
-
 
 END;
 /
