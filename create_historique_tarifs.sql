@@ -1,16 +1,7 @@
-/*
- * 7. Créez un trigger HistoTarifs qui alimente une table
- *    historique_tarifs(numt, numpiz, taille, prix, date_deb_tarif,
- *    date_fin_tarif) en cas de modification de tarif.
-*/
-
-/*
- * Création de la table historique_tarifs (tous les champs doivent être
- * renseignés).
- */
-CREATE TABLE historique_tarifs(
+CREATE TABLE historique_tarifs (
     CONSTRAINT pk_historique_tarifs
-    PRIMARY KEY (numt, date_deb_tarif),
+    PRIMARY KEY (idt),
+    idt            NUMBER GENERATED ALWAYS AS IDENTITY,
     numt           NUMBER(2)   NOT NULL,
                    CONSTRAINT fk_historique_tarifs_numt
                    FOREIGN KEY (numt)
@@ -22,11 +13,5 @@ CREATE TABLE historique_tarifs(
     taille         NUMBER(1)   NOT NULL,
     prix           NUMBER(4,2) NOT NULL,
     date_deb_tarif DATE        NOT NULL,
-    date_fin_tarif DATE        NOT NULL
+    date_fin_tarif DATE
 );
-
-/* Création du trigger. */
-CREATE OR REPLACE TRIGGER HistoTarifs
-BEGIN
-END;
-/
