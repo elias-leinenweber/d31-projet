@@ -1,4 +1,4 @@
-SET SERVEROUTPUT ON;
+SET SERVEROUTPUT ON FORMAT WRAPPED;
 
 CREATE OR REPLACE PACKAGE GestionCarte IS
 	PROCEDURE PizzasSansIng(nomIng ingredient.libelle%TYPE);
@@ -16,7 +16,7 @@ CREATE OR REPLACE PACKAGE BODY GestionCarte IS
  */
 PROCEDURE PizzasSansIng(nomIng ingredient.libelle%TYPE)
 AS
-	CURSOR curPizzaSansIng IS
+	CURSOR pizzasSansIng IS
 	SELECT nompiz
 	  FROM pizza
 	 WHERE numpiz NOT IN
@@ -28,8 +28,8 @@ AS
 	                 WHERE LOWER(libelle) = LOWER(nomIng)));
 BEGIN
 	DBMS_OUTPUT.PUT_LINE('Noms des pizzas qui ne contiennent pas de ' || nomIng || ' :');
-	FOR recPizza IN curPizzaSansIng LOOP
-		DBMS_OUTPUT.PUT_LINE(' - ' || recPizza.nompiz);
+	FOR pizza IN pizzasSansIng LOOP
+		DBMS_OUTPUT.PUT_LINE(' - ' || pizza.nompiz);
 	END LOOP;
 END PizzasSansIng;
 
@@ -40,7 +40,7 @@ END PizzasSansIng;
  */
 PROCEDURE PizzasSansCat(libCat categorie_ing.libelle%TYPE)
 AS
-	CURSOR curPizzaSansCat IS
+	CURSOR pizzasSansCat IS
 	SELECT nompiz
 	  FROM pizza
 	 WHERE numpiz NOT IN
@@ -55,8 +55,8 @@ AS
 	                         WHERE LOWER(libelle) = LOWER(libCat))));
 BEGIN
 	DBMS_OUTPUT.PUT_LINE('Noms des pizzas ne contenant pas de ' || libCat || ' :');
-	FOR recPizza IN curPizzaSansCat LOOP
-		DBMS_OUTPUT.PUT_LINE(recPizza.nompiz);
+	FOR pizza IN pizzasSansCat LOOP
+		DBMS_OUTPUT.PUT_LINE(' - ' || pizza.nompiz);
 	END LOOP;
 END PizzasSansCat;
 
@@ -67,26 +67,25 @@ END PizzasSansCat;
  */
 PROCEDURE AfficheCarte
 AS
-	CURSOR curPizzaIng IS
-	SELECT p.numpiz, INITCAP(p.nompiz) nomPizza,
-	       LISTAGG(i.libelle, ', ') WITHIN GROUP(ORDER BY i.libelle) listeIng
+	CURSOR pizzasIng IS
+	SELECT p.numpiz, INITCAP(p.nompiz) nom, LISTAGG(i.libelle, ', ') WITHIN GROUP(ORDER BY i.libelle) listeIng
 	  FROM pizza p
-	       JOIN composition co
-	       ON p.numpiz = co.pizza
+	       JOIN composition c
+	       ON p.numpiz = c.pizza
 	       JOIN ingredient i
-	       ON co.ing = i.numing
+	       ON c.ing = i.numing
 	 GROUP BY p.numpiz, INITCAP(p.nompiz);
 
-	CURSOR curTaillePrix(numpiz pizza.numpiz%TYPE) IS
+	CURSOR lignesTaillePrix(numpiz pizza.numpiz%TYPE) IS
 	SELECT taille, prix
 	  FROM tarif
 	 WHERE pizza = numpiz
 	 ORDER BY taille;
 BEGIN
-	FOR recPizzaIng IN curPizzaIng LOOP
-		DBMS_OUTPUT.PUT_LINE('|- ' || recPizzaIng.nomPizza || ' : ' || recPizzaIng.listeIng);
-		FOR recTaillePrix IN curTaillePrix(recPizzaIng.numpiz) LOOP
-			DBMS_OUTPUT.PUT_LINE('| |- ' || recTaillePrix.taille || ' personnes : ' || recTaillePrix.prix || ' euros');
+	FOR pizzaIng IN pizzasIng LOOP
+		DBMS_OUTPUT.PUT_LINE('|- ' || pizzaIng.nom || ' : ' || pizzaIng.listeIng);
+		FOR ligneTaillePrix IN lignesTaillePrix(pizzaIng.numpiz) LOOP
+			DBMS_OUTPUT.PUT_LINE('| |- ' || ligneTaillePrix.taille || ' personnes : ' || ligneTaillePrix.prix || ' euros');
 		END LOOP;
 	END LOOP;
 END AfficheCarte;
@@ -99,13 +98,13 @@ END AfficheCarte;
  */
 PROCEDURE ModifTarif(numpiz pizza.numpiz%TYPE, taille tarif.taille%TYPE, montant tarif.prix%TYPE)
 AS
-	CURSOR curPrixPizzaPetite IS
+	CURSOR prixPizzasPlusPetites IS
 	SELECT prix
 	  FROM tarif
 	 WHERE pizza = numpiz
 	   AND tarif.taille < ModifTarif.taille;
 	
-	CURSOR curPrixPizzaGrande IS
+	CURSOR prixPizzasPlusGrandes IS
 	SELECT prix
 	  FROM tarif
 	 WHERE pizza = numpiz
@@ -115,13 +114,13 @@ BEGIN
 		RAISE INVALID_NUMBER;
 	END IF;
 
-	FOR recPrix IN curPrixPizzaPetite LOOP
+	FOR recPrix IN prixPizzasPlusPetites LOOP
 		IF (montant < recPrix.prix) THEN
 			RAISE INVALID_NUMBER;
 		END IF;
 	END LOOP;
 
-	FOR recPrix IN curPrixPizzaGrande LOOP
+	FOR recPrix IN prixPizzasPlusGrandes LOOP
 		IF (montant > recPrix.prix) THEN
 			RAISE INVALID_NUMBER;
 		END IF;

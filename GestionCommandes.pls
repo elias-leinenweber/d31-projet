@@ -1,4 +1,4 @@
-SET SERVEROUTPUT ON;
+SET SERVEROUTPUT ON FORMAT WRAPPED;
 
 CREATE OR REPLACE PACKAGE GestionCommandes IS
 	PROCEDURE AfficheProchainesCommandes;
@@ -25,9 +25,9 @@ CREATE OR REPLACE PACKAGE BODY GestionCommandes IS
  */
 PROCEDURE AfficheProchainesCommandes
 AS
-	CURSOR curProchainesCommandes IS
+	CURSOR prochainesCommandes IS
 	SELECT c.numc, dateheure_cmd, adresse1, adresse2, codepostal, ville,
-	       SUM(l.quantite) qtPiz
+	       SUM(l.quantite) qtePizza
 	  FROM commande c
 	       JOIN ligne_cmd l
 	       ON c.numc = l.numc
@@ -37,17 +37,17 @@ AS
 	 GROUP BY c.numc, dateheure_cmd,adresse1, adresse2, codepostal, ville
 	 ORDER BY dateheure_cmd;
 BEGIN
-	DBMS_OUTPUT.PUT_LINE('---------------------------------');
-	FOR cmd IN curProchainesCommandes LOOP
-		DBMS_OUTPUT.PUT_LINE('Numéro commande : '|| cmd.numc);
-		DBMS_OUTPUT.PUT_LINE('Quantité de pizzas : '|| cmd.qtPiz);
-		DBMS_OUTPUT.PUT_LINE('Ville : '|| cmd.ville);
-		DBMS_OUTPUT.PUT_LINE('Adresse : '||cmd.adresse1);
+	DBMS_OUTPUT.PUT_LINE('---------------------------------------');
+	FOR cmd IN prochainesCommandes LOOP
+		DBMS_OUTPUT.PUT_LINE('Numéro de commande : ' || cmd.numc);
+		DBMS_OUTPUT.PUT_LINE('Quantité de pizzas : ' || cmd.qtePizza);
+		DBMS_OUTPUT.PUT_LINE('Ville : ' || cmd.ville);
+		DBMS_OUTPUT.PUT_LINE('Adresse : ' || cmd.adresse1);
 		IF cmd.adresse2 IS NOT NULL THEN
-			DBMS_OUTPUT.PUT_LINE('Complément d''adresse : '|| cmd.adresse2);
+			DBMS_OUTPUT.PUT_LINE('Complément d''adresse : ' || cmd.adresse2);
 		END IF;
-		DBMS_OUTPUT.PUT_LINE('Code postal : '|| cmd.codepostal);
-		DBMS_OUTPUT.PUT_LINE('---------------------------------');
+		DBMS_OUTPUT.PUT_LINE('Code postal : ' || cmd.codepostal);
+		DBMS_OUTPUT.PUT_LINE('---------------------------------------');
 	END LOOP;
 END AfficheProchainesCommandes;
 
@@ -81,15 +81,15 @@ RETURN REAL
 AS
 	cout	REAL;
 
-	CURSOR curLigneCmd IS
+	CURSOR lignesCmd IS
 	SELECT numc, tarif
 	  FROM ligne_cmd
 	 WHERE numc = numcom;
 BEGIN
 	cout := 0;
 
-	FOR recLigneCmd IN curLigneCmd LOOP
-		cout := cout + CoutLigneCommande(recLigneCmd.numc, recLigneCmd.tarif);
+	FOR ligneCmd IN lignesCmd LOOP
+		cout := cout + CoutLigneCommande(ligneCmd.numc, ligneCmd.tarif);
 	END LOOP;
 
 	RETURN cout;
@@ -104,15 +104,15 @@ RETURN REAL
 AS
 	gain	REAL;
 
-	CURSOR curCmdJour IS
+	CURSOR commandesJour IS
 	SELECT numc
 	  FROM commande
 	 WHERE TO_CHAR(dateheure_cmd, 'DD/MM/YYYY') = TO_CHAR(jour, 'DD/MM/YYYY');
 BEGIN
 	gain := 0;
 
-	FOR recCmdJour IN curCmdJour LOOP
-		gain := gain + CoutCommande(recCmdJour.numc);
+	FOR cmdJour IN commandesJour LOOP
+		gain := gain + CoutCommande(cmdJour.numc);
 	END LOOP;
 
 	RETURN gain;
@@ -181,18 +181,18 @@ BEGIN
 
 	DBMS_OUTPUT.PUT_LINE('                PIZZERIA PRONTO                ');
 	DBMS_OUTPUT.PUT_LINE('===============================================');
-	DBMS_OUTPUT.PUT_LINE('Commande n° ' || numcom || '   Date : ' || TO_CHAR(datec, 'DD/MM/YYYY'));
+	DBMS_OUTPUT.PUT_LINE('Commande n° ' || numcom || '          Date : ' || TO_CHAR(datec, 'DD/MM/YYYY'));
 	DBMS_OUTPUT.PUT_LINE('===============================================');
-	DBMS_OUTPUT.PUT_LINE('Pizza (taille) Qté P.U. Total av. rem. Remise Total ap. remise');
+	DBMS_OUTPUT.PUT_LINE('Piz. (tail.)  Qté PU Total av.r Rem. Total ap.r');
 	DBMS_OUTPUT.PUT_LINE('-----------------------------------------------');
 	FOR lf IN lignesFacture LOOP
 		DBMS_OUTPUT.PUT_LINE(lf.pizza || ' (' || lf.taille ||
-		    ' pers.) ' || lf.qte || ' ' || lf.pu || ' ' ||
+		    ' pers.)  ' || lf.qte || ' ' || lf.pu || ' ' ||
 		    lf.total_pre_r || ' ' || lf.remise || ' ' || lf.total);
 	END LOOP;
 	DBMS_OUTPUT.PUT_LINE('===============================================');
 	DBMS_OUTPUT.PUT_LINE('Total avec remise : ' || CoutCommande(numcom));
-	DBMS_OUTPUT.PUT_LINE('Remise : ' || (CoutCommande(numcom) - total));
+	DBMS_OUTPUT.PUT_LINE('Remise : ' || (total - CoutCommande(numcom)));
 END Facture;
 
 /*
@@ -202,9 +202,11 @@ END Facture;
  */
 PROCEDURE MeilleureCommandeMoisCourant
 AS
-	-- on utlise un cursor pour pouvoir afficher plusieurs commandes dans le cas
-	-- où il ya plusieurs meilleures commandes !
-	CURSOR curMeilleuresCmd IS
+	/*
+	 * On utlise un curseur pour pouvoir afficher plusieurs commandes dans
+	 * le cas où il y a plusieurs meilleures commandes.
+	 */
+	CURSOR meilleuresCmd IS
 	SELECT numc, CoutCommande(numc) cout
 	  FROM commande
 	 WHERE TO_CHAR(SYSDATE, 'MM/YYYY') = TO_CHAR(dateheure_cmd, 'MM/YYYY')
@@ -213,13 +215,12 @@ AS
 	          FROM commande
 	         WHERE TO_CHAR(SYSDATE, 'MM/YYYY') = TO_CHAR(dateheure_cmd, 'MM/YYYY'));
 BEGIN
-	DBMS_OUTPUT.PUT_LINE('---------------------------------');
-	FOR meilleureCmd IN curMeilleuresCmd LOOP
+	DBMS_OUTPUT.PUT_LINE('---------------------------------------');
+	FOR meilleureCmd IN meilleuresCmd LOOP
 		DBMS_OUTPUT.PUT_LINE('Meilleure commande du mois : ' || meilleureCmd.numc);
 		DBMS_OUTPUT.PUT_LINE('Avec un coût de : ' || meilleureCmd.cout);
-		DBMS_OUTPUT.PUT_LINE('---------------------------------');
+		DBMS_OUTPUT.PUT_LINE('---------------------------------------');
 	END LOOP;
 END MeilleureCommandeMoisCourant;
-
 END;
 /
