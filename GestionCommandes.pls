@@ -26,7 +26,8 @@ CREATE OR REPLACE PACKAGE BODY GestionCommandes IS
 PROCEDURE AfficheProchainesCommandes
 AS
 	CURSOR curProchainesCommandes IS
-	SELECT c.numc,dateheure_cmd, adresse1, adresse2, codepostal, ville, SUM(l.quantite) qtPiz
+	SELECT c.numc, dateheure_cmd, adresse1, adresse2, codepostal, ville,
+	       SUM(l.quantite) qtPiz
 	  FROM commande c
 	       JOIN ligne_cmd l
 	       ON c.numc = l.numc
@@ -35,7 +36,6 @@ AS
 	   AND etat IS NULL
 	 GROUP BY c.numc, dateheure_cmd,adresse1, adresse2, codepostal, ville
 	 ORDER BY dateheure_cmd;
-
 BEGIN
 	FOR cmd IN curProchainesCommandes LOOP
 		DBMS_OUTPUT.PUT_LINE('Numéro commande : '|| cmd.numc);
@@ -46,7 +46,7 @@ BEGIN
 			DBMS_OUTPUT.PUT_LINE('Complément d''adresse : '|| cmd.adresse2);
 		END IF;
 		DBMS_OUTPUT.PUT_LINE('Code postal : '|| cmd.codepostal);
-	END LOOP
+	END LOOP;
 END AfficheProchainesCommandes;
 
 /*
@@ -55,11 +55,12 @@ END AfficheProchainesCommandes;
  *       remises).
  */
 FUNCTION CoutLigneCommande(numcom commande.numc%TYPE, numtarif tarif.numt%TYPE)
-RETURN tarix.prix%TYPE
+RETURN tarif.prix%TYPE
 AS
 	cout	tarif.prix%TYPE;
 BEGIN
-	SELECT ((100 - NVL(l.remise, 0)) / 100) * l.quantite * t.prix INTO cout
+	SELECT ((100 - NVL(l.remise, 0)) / 100) * l.quantite * t.prix
+	  INTO cout
 	  FROM ligne_cmd l
 	       JOIN tarif t
 	       ON l.tarif = t.numt
@@ -137,7 +138,7 @@ BEGIN
 	END LOOP;
 
 	RETURN gain;
-END GainsMois;
+END GainMois;
 
 /*
  *    f) un sous-programme Facture(numcom) qui affiche le détail d'une commande
@@ -150,23 +151,46 @@ END GainsMois;
 PROCEDURE Facture(numcom commande.numc%TYPE)
 AS
 	datec	commande.dateheure_cmd%TYPE;
+	total	tarif.prix%TYPE;
 
-	--CURSOR curLigneFacture IS
+	CURSOR lignesFacture IS
+	SELECT UPPER(p.nompiz) pizza, t.taille taille, l.quantite qte,
+	       t.prix pu, l.quantite * t.prix total_pre_r,
+	       (NVL(remise, 0) / 100) * l.quantite * t.prix remise,
+	       CoutLigneCommande(l.numc, t.numt) total
+	  FROM ligne_cmd l
+	       JOIN tarif t
+	       ON l.tarif = t.numt
+	       JOIN pizza p
+	       ON t.pizza = p.numpiz
+	 WHERE l.numc = numcom;
 BEGIN
 	SELECT dateheure_cmd
 	  INTO datec
 	  FROM commande
 	 WHERE numc = numcom;
+	
+	SELECT SUM(l.quantite * t.prix)
+	  INTO total
+	  FROM ligne_cmd l
+	       JOIN tarif t
+	       ON l.tarif = t.numt
+	 WHERE l.numc = numcom;
 
 	DBMS_OUTPUT.PUT_LINE('                PIZZERIA PRONTO                ');
 	DBMS_OUTPUT.PUT_LINE('===============================================');
-	DBMS_OUTPUT.PUT_LINE('Commande n° ' || numcom || '   Date : ' || datec);
+	DBMS_OUTPUT.PUT_LINE('Commande n° ' || numcom || '   Date : ' || TO_CHAR(datec, 'DD/MM/YYYY'));
 	DBMS_OUTPUT.PUT_LINE('===============================================');
-	DBMS_OUTPUT.PUT_LINE('Pizza                          Qté P.U. Montant');
+	DBMS_OUTPUT.PUT_LINE('Pizza (taille) Qté P.U. Total av. rem. Remise Total ap. remise');
 	DBMS_OUTPUT.PUT_LINE('-----------------------------------------------');
-	FOR EVER LOOP
-		DBMS_OUTPUT.PUT_LINE(piz || '  ' || qte || ' ' || pu || ' ' || montant);
+	FOR lf IN lignesFacture LOOP
+		DBMS_OUTPUT.PUT_LINE(lf.pizza || ' (' || lf.taille ||
+		    ' pers.) ' || lf.qte || ' ' || lf.pu || ' ' ||
+		    lf.total_pre_r || ' ' || lf.remise || ' ' || lf.total);
 	END LOOP;
+	DBMS_OUTPUT.PUT_LINE('===============================================');
+	DBMS_OUTPUT.PUT_LINE('Total avec remise : ' || CoutCommande(numcom));
+	DBMS_OUTPUT.PUT_LINE('Remise : ' || CoutCommande(numcom) - total);
 END Facture;
 
 /*
@@ -180,7 +204,7 @@ AS
 	coutMeilleureCmd	tarif.prix%TYPE;
 BEGIN
 	SELECT numc, CoutCommande(numc)
-	  INTO (meilleureCmd,coutMeilleureCmd)
+	  INTO meilleureCmd, coutMeilleureCmd
 	  FROM commande
 	 WHERE TO_CHAR(SYSDATE, 'MM/YYYY') = TO_CHAR(dateheure_cmd, 'MM/YYYY')
 	   AND CoutCommande(numc) =

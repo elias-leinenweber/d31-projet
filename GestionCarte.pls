@@ -2,7 +2,7 @@ SET SERVEROUTPUT ON;
 
 CREATE OR REPLACE PACKAGE GestionCarte IS
 	PROCEDURE PizzasSansIng(nomIng ingredient.libelle%TYPE);
-	PROCEDURE PizzasSansCat(libCat categorie_ing.numcat%TYPE);
+	PROCEDURE PizzasSansCat(libCat categorie_ing.libelle%TYPE);
 	PROCEDURE AfficheCarte;
 	PROCEDURE ModifTarif(numpiz pizza.numpiz%TYPE, taille tarif.taille%TYPE, montant tarif.prix%TYPE);
 END GestionCarte;
@@ -68,23 +68,24 @@ END PizzasSansCat;
 PROCEDURE AfficheCarte
 AS
 	CURSOR curPizzaIng IS
-	SELECT p.numpiz, INITCAP(p.nompiz) "nomPizza", LISTAGG(i.libelle, ', ') "listeIng"
+	SELECT p.numpiz, INITCAP(p.nompiz) nomPizza,
+	       LISTAGG(i.libelle, ', ') WITHIN GROUP(ORDER BY i.libelle) listeIng
 	  FROM pizza p
-	       JOIN composition c
-	       ON p.numpiz = c.pizza
+	       JOIN composition co
+	       ON p.numpiz = co.pizza
 	       JOIN ingredient i
-	       ON c.ing = i.numing
+	       ON co.ing = i.numing
 	 GROUP BY p.numpiz, INITCAP(p.nompiz);
 
 	CURSOR curTaillePrix(numpiz pizza.numpiz%TYPE) IS
 	SELECT taille, prix
-	  FROM tarifs
+	  FROM tarif
 	 WHERE pizza = numpiz
 	 ORDER BY taille;
 BEGIN
 	FOR recPizzaIng IN curPizzaIng LOOP
 		DBMS_OUTPUT.PUT_LINE('|- ' || recPizzaIng.nomPizza || ' : ' || recPizzaIng.listeIng);
-		FOR recTaillePrix IN curTaillePrix(curPizzaIng.numpiz) LOOP
+		FOR recTaillePrix IN curTaillePrix(recPizzaIng.numpiz) LOOP
 			DBMS_OUTPUT.PUT_LINE('| |- ' || recTaillePrix.taille || ' personnes : ' || recTaillePrix.prix || ' euros');
 		END LOOP;
 	END LOOP;
