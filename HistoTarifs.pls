@@ -1,7 +1,7 @@
 /*
- * 7. Créez un trigger HistoTarifs qui alimente une table
- *    historique_tarifs(idt, numt, numpiz, taille, prix, date_deb_tarif,
- *    date_fin_tarif) en cas de modification de tarif.
+ * 7. Créez un trigger HistoTarifs qui alimente une table historique_tarifs(idt,
+ *    numt, numpiz, taille, prix, date_deb_tarif, date_fin_tarif) en cas de
+ *    modification de tarif.
 */
 CREATE OR REPLACE TRIGGER
 HistoTarifs

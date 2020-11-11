@@ -6,7 +6,7 @@
 --DROP TABLE pizza;
 --DROP TABLE ingredient;
 --DROP TABLE categorie_ing;
---DROP TABLE historique_tarifs -- table ajoutée
+--DROP TABLE historique_tarifs
 
 
 

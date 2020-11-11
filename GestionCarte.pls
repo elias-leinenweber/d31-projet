@@ -67,9 +67,27 @@ END PizzasSansCat;
  */
 PROCEDURE AfficheCarte
 AS
-	CURSOR curPizza IS
-	SELECT INITCAP(pizza.nompiz), LOWER(ingredient.libelle)
+	CURSOR curPizzaIng IS
+	SELECT p.numpiz, INITCAP(p.nompiz) "nomPizza", LISTAGG(i.libelle, ', ') "listeIng"
+	  FROM pizza p
+	       JOIN composition c
+	       ON p.numpiz = c.pizza
+	       JOIN ingredient i
+	       ON c.ing = i.numing
+	 GROUP BY p.numpiz, INITCAP(p.nompiz);
+
+	CURSOR curTaillePrix(numpiz pizza.numpiz%TYPE) IS
+	SELECT taille, prix
+	  FROM tarifs
+	 WHERE pizza = numpiz
+	 ORDER BY taille;
 BEGIN
+	FOR recPizzaIng IN curPizzaIng LOOP
+		DBMS_OUTPUT.PUT_LINE('|- ' || recPizzaIng.nomPizza || ' : ' || recPizzaIng.listeIng);
+		FOR recTaillePrix IN curTaillePrix(curPizzaIng.numpiz) LOOP
+			DBMS_OUTPUT.PUT_LINE('| |- ' || recTaillePrix.taille || ' personnes : ' || recTaillePrix.prix || ' euros');
+		END LOOP;
+	END LOOP;
 END AfficheCarte;
 
 /*

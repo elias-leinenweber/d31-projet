@@ -30,7 +30,7 @@ AS
 	ORDER BY c.dateheure_cmd;
 
 BEGIN
-END AfficheCarte;
+END AfficheProchainesCommandes;
 
 /*
  *    b) un sous-programme CoutLigneCommande(numcom, numtarif) qui retourne le
