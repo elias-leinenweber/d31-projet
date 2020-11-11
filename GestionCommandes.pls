@@ -3,13 +3,13 @@ SET SERVEROUTPUT ON;
 CREATE OR REPLACE PACKAGE GestionCommandes IS
 	PROCEDURE AfficheProchainesCommandes;
 	 FUNCTION CoutLigneCommande(numcom commande.numc%TYPE, numtarif tarif.numt%TYPE)
-	   RETURN tarif.prix%TYPE;
+	   RETURN REAL;
 	 FUNCTION CoutCommande(numcom commande.numc%TYPE)
-	   RETURN tarif.prix%TYPE;
+	   RETURN REAL;
 	 FUNCTION GainJour(jour DATE)
-	   RETURN tarif.prix%TYPE;
+	   RETURN REAL;
 	 FUNCTION GainMois(annee NUMBER, mois NUMBER)
-	   RETURN tarif.prix%TYPE;
+	   RETURN REAL;
 	PROCEDURE Facture(numcom commande.numc%TYPE);
 	PROCEDURE MeilleureCommandeMoisCourant;
 END GestionCommandes;
@@ -37,6 +37,7 @@ AS
 	 GROUP BY c.numc, dateheure_cmd,adresse1, adresse2, codepostal, ville
 	 ORDER BY dateheure_cmd;
 BEGIN
+	DBMS_OUTPUT.PUT_LINE('---------------------------------');
 	FOR cmd IN curProchainesCommandes LOOP
 		DBMS_OUTPUT.PUT_LINE('Numéro commande : '|| cmd.numc);
 		DBMS_OUTPUT.PUT_LINE('Quantité de pizzas : '|| cmd.qtPiz);
@@ -46,6 +47,7 @@ BEGIN
 			DBMS_OUTPUT.PUT_LINE('Complément d''adresse : '|| cmd.adresse2);
 		END IF;
 		DBMS_OUTPUT.PUT_LINE('Code postal : '|| cmd.codepostal);
+		DBMS_OUTPUT.PUT_LINE('---------------------------------');
 	END LOOP;
 END AfficheProchainesCommandes;
 
@@ -55,9 +57,9 @@ END AfficheProchainesCommandes;
  *       remises).
  */
 FUNCTION CoutLigneCommande(numcom commande.numc%TYPE, numtarif tarif.numt%TYPE)
-RETURN tarif.prix%TYPE
+RETURN REAL
 AS
-	cout	tarif.prix%TYPE;
+	cout	REAL;
 BEGIN
 	SELECT ((100 - NVL(l.remise, 0)) / 100) * l.quantite * t.prix
 	  INTO cout
@@ -75,9 +77,9 @@ END CoutLigneCommande;
  *       commande (en tenant compte des éventuelles remises).
  */
 FUNCTION CoutCommande(numcom commande.numc%TYPE)
-RETURN tarif.prix%TYPE
+RETURN REAL
 AS
-	cout	tarif.prix%TYPE;
+	cout	REAL;
 
 	CURSOR curLigneCmd IS
 	SELECT numc, tarif
@@ -98,9 +100,9 @@ END CoutCommande;
  *       passé en paramètre.
  */
 FUNCTION GainJour(jour DATE)
-RETURN tarif.prix%TYPE
+RETURN REAL
 AS
-	gain	tarif.prix%TYPE;
+	gain	REAL;
 
 	CURSOR curCmdJour IS
 	SELECT numc
@@ -121,9 +123,9 @@ END GainJour;
  *       sur un mois donné.
  */
 FUNCTION GainMois(annee NUMBER, mois NUMBER)
-RETURN tarif.prix%TYPE
+RETURN REAL
 AS
-	gain	tarif.prix%TYPE;
+	gain	REAL;
 
 	CURSOR commandesDuMois IS
 	SELECT numc
@@ -151,7 +153,7 @@ END GainMois;
 PROCEDURE Facture(numcom commande.numc%TYPE)
 AS
 	datec	commande.dateheure_cmd%TYPE;
-	total	tarif.prix%TYPE;
+	total	REAL;
 
 	CURSOR lignesFacture IS
 	SELECT UPPER(p.nompiz) pizza, t.taille taille, l.quantite qte,
@@ -200,20 +202,24 @@ END Facture;
  */
 PROCEDURE MeilleureCommandeMoisCourant
 AS
-	meilleureCmd		commande.numc%TYPE;
-	coutMeilleureCmd	tarif.prix%TYPE;
-BEGIN
-	SELECT numc, CoutCommande(numc)
-	  INTO meilleureCmd, coutMeilleureCmd
+	-- on utlise un cursor pour pouvoir afficher plusieurs commandes dans le cas
+	-- où il ya plusieurs meilleures commandes !
+	CURSOR curMeilleuresCmd IS
+	SELECT numc, CoutCommande(numc) cout
 	  FROM commande
 	 WHERE TO_CHAR(SYSDATE, 'MM/YYYY') = TO_CHAR(dateheure_cmd, 'MM/YYYY')
 	   AND CoutCommande(numc) =
 	       (SELECT MAX(CoutCommande(numc))
 	          FROM commande
 	         WHERE TO_CHAR(SYSDATE, 'MM/YYYY') = TO_CHAR(dateheure_cmd, 'MM/YYYY'));
-
-	DBMS_OUTPUT.PUT_LINE('Meilleure commande du mois : ' || meilleureCmd);
-	DBMS_OUTPUT.PUT_LINE('Avec un coût de : ' || coutMeilleureCmd);
+BEGIN
+	DBMS_OUTPUT.PUT_LINE('---------------------------------');
+	FOR meilleureCmd IN curMeilleuresCmd LOOP
+		DBMS_OUTPUT.PUT_LINE('Meilleure commande du mois : ' || meilleureCmd.numc);
+		DBMS_OUTPUT.PUT_LINE('Avec un coût de : ' || meilleureCmd.cout);
+		DBMS_OUTPUT.PUT_LINE('---------------------------------');
+	END LOOP;
 END MeilleureCommandeMoisCourant;
+
 END;
 /
