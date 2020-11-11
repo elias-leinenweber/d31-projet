@@ -131,6 +131,5 @@ BEGIN
 	 WHERE pizza = numpiz
 	   AND tarif.taille = taille;
 END ModifTarif;
-
 END;
 /
