@@ -190,7 +190,7 @@ BEGIN
 	END LOOP;
 	DBMS_OUTPUT.PUT_LINE('===============================================');
 	DBMS_OUTPUT.PUT_LINE('Total avec remise : ' || CoutCommande(numcom));
-	DBMS_OUTPUT.PUT_LINE('Remise : ' || CoutCommande(numcom) - total);
+	DBMS_OUTPUT.PUT_LINE('Remise : ' || (CoutCommande(numcom) - total));
 END Facture;
 
 /*

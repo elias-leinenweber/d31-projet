@@ -1,13 +1,15 @@
---DROP TABLE ligne_cmd;
---DROP TABLE commande;
---DROP TABLE livreur;
---DROP TABLE tarif;
---DROP TABLE composition;
---DROP TABLE pizza;
---DROP TABLE ingredient;
---DROP TABLE categorie_ing;
+-- custom script pour tester
+DROP TABLE historique_tarifs;
+DROP TABLE ligne_cmd;
+DROP TABLE commande;
+DROP TABLE livreur;
+DROP TABLE tarif;
+DROP TABLE composition;
+DROP TABLE pizza;
+DROP TABLE ingredient;
+DROP TABLE categorie_ing;
 
-
+SET SERVER_OUTPUT ON;
 
 
 CREATE TABLE categorie_ing(
@@ -88,6 +90,10 @@ CREATE TABLE ligne_cmd(
        CONSTRAINT fk_ligne_cmd_numc FOREIGN KEY (numc) REFERENCES commande,
        CONSTRAINT fk_ligne_cmd_numt FOREIGN KEY (tarif) REFERENCES tarif
 );
+
+-- creation de notre table historique tarifs
+@create_historique_tarifs.sql
+@HistoTarifs.pls
 
 INSERT INTO categorie_ing VALUES (1, 'fruits et legumes');
 INSERT INTO categorie_ing VALUES (2, 'viande');

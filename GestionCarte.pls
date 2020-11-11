@@ -29,7 +29,7 @@ AS
 BEGIN
 	DBMS_OUTPUT.PUT_LINE('Noms des pizzas qui ne contiennent pas de ' || nomIng || ' :');
 	FOR recPizza IN curPizzaSansIng LOOP
-		DBMS_OUTPUT.PUT_LINE(recPizza.nompiz);
+		DBMS_OUTPUT.PUT_LINE(' - ' || recPizza.nompiz);
 	END LOOP;
 END PizzasSansIng;
 
