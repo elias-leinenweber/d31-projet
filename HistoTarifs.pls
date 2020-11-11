@@ -5,16 +5,9 @@
 */
 CREATE OR REPLACE TRIGGER
 HistoTarifs
-AFTER UPDATE OR INSERT ON tarif FOR EACH ROW
+AFTER UPDATE ON tarif FOR EACH ROW
 BEGIN
-	IF (inserting) THEN
-		INSERT INTO historique_tarifs (numt, pizza, taille, prix, date_deb_tarif, date_fin_tarif)
-		VALUES (:NEW.numt, :NEW.pizza, :NEW.taille, :NEW.prix, SYSDATE, NULL);
-	ELSIF (updating) THEN
-		UPDATE historique_tarifs
-		   SET date_fin_tarif = SYSDATE
-		 WHERE numt = :NEW.numt
-		   AND date_deb_tarif = NULL;
-	END IF;
+	INSERT INTO historique_tarifs (numt, pizza, taille, prix, date_deb_tarif)
+	VALUES (:OLD.numt, :OLD.pizza, :OLD.taille, :OLD.prix, :OLD.datet);
 END;
 /

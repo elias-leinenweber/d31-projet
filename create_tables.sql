@@ -9,7 +9,7 @@ DROP TABLE pizza;
 DROP TABLE ingredient;
 DROP TABLE categorie_ing;
 
-SET SERVER_OUTPUT ON;
+SET SERVEROUTPUT ON;
 
 
 CREATE TABLE categorie_ing(
@@ -259,5 +259,29 @@ INSERT INTO ligne_cmd VALUES (1311, 6, 1, NULL);
 INSERT INTO ligne_cmd VALUES (1312, 24, 1, NULL);
 INSERT INTO ligne_cmd VALUES (1312, 18, 2, NULL);
 INSERT INTO ligne_cmd VALUES (1313, 15, 2, NULL);
+
+
+-- AJOUT DE NOS VALEURS
+-- TEST de GestionCommandes.AfficheProchainesCommandes, 6.a)
+INSERT INTO commande VALUES (666, 'L.', 'Elias', '6666666666', 'Route de la richesse', 'Manoir luxuriant', 67000, 'STRASBOURG',
+SYSDATE +INTERVAL '30' MINUTE, NULL, NULL, NULL);
+INSERT INTO ligne_cmd VALUES (666, 2, 1, 5);
+INSERT INTO ligne_cmd VALUES (666, 10, 12, NULL);
+
+INSERT INTO commande VALUES (777, 'F.', 'Francois', '0123456789', 'Avenue Oblique', 'etage 2', 60568, 'SAINT-AUBIN-SOUS-ERQUERY',
+SYSDATE +INTERVAL '45' MINUTE, NULL, NULL, NULL);
+INSERT INTO ligne_cmd VALUES (777, 4, 2, 20);
+INSERT INTO ligne_cmd VALUES (777, 18, 12, 10);
+INSERT INTO ligne_cmd VALUES (777, 6, 4, NULL);
+
+
+-- TEST Triger 7.
+-- la modification d'un tarif devrait insérer des lignes dans la table
+-- historique_tarifs
+EXEC GestionCarte.ModifTarif(2, 4, 13);
+EXEC GestionCarte.ModifTarif(1, 2, 3);
+
+
+
 
 commit;

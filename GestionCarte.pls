@@ -103,13 +103,13 @@ AS
 	SELECT prix
 	  FROM tarif
 	 WHERE pizza = numpiz
-	   AND tarif.taille < taille;
+	   AND tarif.taille < ModifTarif.taille;
 	
 	CURSOR curPrixPizzaGrande IS
 	SELECT prix
 	  FROM tarif
 	 WHERE pizza = numpiz
-	   AND tarif.taille > taille;
+	   AND tarif.taille > ModifTarif.taille;
 BEGIN
 	IF (montant < 0) THEN
 		RAISE INVALID_NUMBER;
@@ -130,7 +130,7 @@ BEGIN
 	UPDATE tarif
 	   SET prix = montant
 	 WHERE pizza = numpiz
-	   AND tarif.taille = taille;
+	   AND tarif.taille = ModifTarif.taille;
 END ModifTarif;
 END;
 /

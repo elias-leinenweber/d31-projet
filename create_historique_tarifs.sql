@@ -13,5 +13,5 @@ CREATE TABLE historique_tarifs (
     taille         NUMBER(1)   NOT NULL,
     prix           NUMBER(4,2) NOT NULL,
     date_deb_tarif DATE        NOT NULL,
-    date_fin_tarif DATE
+    date_fin_tarif DATE        DEFAULT SYSDATE
 );
